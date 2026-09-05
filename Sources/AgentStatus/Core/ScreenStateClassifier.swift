@@ -2,17 +2,18 @@
 //  ScreenStateClassifier.swift
 //  AgentStatus
 //
-//  The no-hooks fallback for "is the agent waiting on me?". Hooks are the truth when they
-//  are installed; without them an agent blocked on a permission prompt and an agent thinking
-//  have the same foreground process, so the only other evidence is what is ON THE SCREEN.
-//  This reads the bottom rows of the terminal and looks for the shapes every agent CLI's
-//  prompt takes: a numbered choice with a cursor, a y/n question, an explicit "Allow …?".
-//  Deliberately narrow — a false "Needs you" teaches the user to ignore the rail — and it
-//  stands down entirely the moment a hook has spoken for the run.
+//  The no-hooks fallback for "is the agent waiting on me?": classifies the terminal's visible
+//  screen text as a prompt (a numbered choice, a y/n, a known ask phrase) or as working (an
+//  interrupt hint is showing).
+//
+//  Created by David Sherlock on 9/5/26.
 //
 
 import Foundation
 
+/// The no-hooks fallback for "is the agent waiting on me?": classifies the terminal's visible
+/// screen text as a prompt (a numbered choice, a y/n, a known ask phrase) or as working (an
+/// interrupt hint is showing).
 public enum ScreenStateClassifier {
     /// Numbered choice with a selection cursor: Claude Code ("❯ 1. Yes"), Gemini ("● 1. Yes,
     /// allow once"), Codex ("> 1. Yes").

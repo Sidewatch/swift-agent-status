@@ -9,6 +9,8 @@
 
 import Foundation
 
+/// What the visible screen says the agent is doing: blocked on a prompt (`waitingForInput`) or
+/// busy (`working`).
 public enum ScreenState: Equatable, Sendable {
     /// A prompt is on screen: the agent is blocked until the user answers.
     case waitingForInput
