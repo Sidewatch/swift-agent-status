@@ -1,3 +1,12 @@
+//
+//  AgentStatusTests.swift
+//  AgentStatusTests
+//
+//  Ported from Sidewatch's --dump-terminal-status: the rules, calling the REAL derivation.
+//
+//  Created by David Sherlock on 9/5/26.
+//
+
 import XCTest
 @testable import AgentStatus
 

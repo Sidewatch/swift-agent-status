@@ -1,3 +1,12 @@
+//
+//  SubagentSummary.swift
+//  AgentStatus
+//
+//  One live subagent under an agent row: "⤷ Explore · 12s".
+//
+//  Created by David Sherlock on 9/5/26.
+//
+
 import Foundation
 
 /// One live subagent under an agent row: "⤷ Explore · 12s".

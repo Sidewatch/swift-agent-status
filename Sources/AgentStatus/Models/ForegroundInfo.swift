@@ -1,3 +1,14 @@
+//
+//  ForegroundInfo.swift
+//  AgentStatus
+//
+//  These travelled as loose parameters with nil defaults, and omitting one silently degraded
+//  the derivation — forget the args and an npm-installed agent reports `.running` — while every
+//  stale caller kept compiling.
+//
+//  Created by David Sherlock on 9/5/26.
+//
+
 import Foundation
 
 /// These travelled as loose parameters with nil defaults, and omitting one silently degraded

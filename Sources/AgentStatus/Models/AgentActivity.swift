@@ -1,3 +1,12 @@
+//
+//  AgentActivity.swift
+//  AgentStatus
+//
+//  What the agent is doing, per its hooks — `TerminalController.activity`.
+//
+//  Created by David Sherlock on 9/5/26.
+//
+
 import Foundation
 
 /// What the agent is doing, per its hooks — `TerminalController.activity`.

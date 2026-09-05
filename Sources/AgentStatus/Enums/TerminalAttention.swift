@@ -1,3 +1,14 @@
+//
+//  TerminalAttention.swift
+//  AgentStatus
+//
+//  Kept separate from ``TerminalStatus`` because it is a different KIND of fact: status is
+//  observed continuously from the process table, while this is an event that arrived once and
+//  stays true until you look.
+//
+//  Created by David Sherlock on 9/5/26.
+//
+
 import Foundation
 
 /// Kept separate from ``TerminalStatus`` because it is a different KIND of fact: status is

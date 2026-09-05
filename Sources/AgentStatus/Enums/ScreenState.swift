@@ -1,3 +1,12 @@
+//
+//  ScreenState.swift
+//  AgentStatus
+//
+//  A prompt is on screen: the agent is blocked until the user answers.
+//
+//  Created by David Sherlock on 9/5/26.
+//
+
 import Foundation
 
 public enum ScreenState: Equatable, Sendable {

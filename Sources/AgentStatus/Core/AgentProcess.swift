@@ -1,3 +1,12 @@
+//
+//  AgentProcess.swift
+//  AgentStatus
+//
+//  Naming the foreground program the way a user would, from argv (Zed's approach).
+//
+//  Created by David Sherlock on 9/5/26.
+//
+
 import Foundation
 
 /// Naming the foreground program the way a user would, from argv (Zed's approach).

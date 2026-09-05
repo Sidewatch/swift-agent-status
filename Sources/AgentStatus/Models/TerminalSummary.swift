@@ -1,3 +1,13 @@
+//
+//  TerminalSummary.swift
+//  AgentStatus
+//
+//  A flat snapshot rather than a live reference, so the pane renders from a value and cannot
+//  accidentally keep a closed terminal alive.
+//
+//  Created by David Sherlock on 9/5/26.
+//
+
 import Foundation
 
 /// A flat snapshot rather than a live reference, so the pane renders from a value and cannot

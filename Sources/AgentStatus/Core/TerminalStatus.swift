@@ -1,3 +1,13 @@
+//
+//  TerminalStatus.swift
+//  AgentStatus
+//
+//  Derived from signals Sidewatch already has locally — the pty's foreground process group and
+//  its name — rather than from anything the agent tells us.
+//
+//  Created by David Sherlock on 9/5/26.
+//
+
 import Foundation
 
 /// Derived from signals Sidewatch already has locally — the pty's foreground process group and
