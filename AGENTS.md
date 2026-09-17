@@ -10,13 +10,14 @@ What a terminal is doing — idle, running, agent working, needs you, done — d
 
 - `Core/` — the engine: TerminalStatus (the whitelist + derive), ScreenStateClassifier, AgentProcess (argv naming)
 - `Enums/` — TerminalAttention, ScreenState
-- `Models/` — ForegroundInfo, TerminalSummary, SubagentSummary, AgentActivity
+- `Models/` — ForegroundInfo
 
 ## Rules of this package
 
 - Agent recognition is a WHITELIST: guessing would catch `node` and `python`. Path matching is by exact component, never prefix (a project called `claude-notes` is not an agent).
 - `derive` has no defaulted parameters: omitting one used to silently degrade the answer.
 - Nothing here knows about colours or views; the host maps `TerminalStatus` to its tint.
+- **Auditing? Read `AUDIT.md` first** — what the last full audit checked and fixed, and the known non-issues to skip; extend it, do not redo it.
 
 ## Rules
 
