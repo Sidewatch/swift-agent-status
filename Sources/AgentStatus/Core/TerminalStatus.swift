@@ -39,7 +39,9 @@ public enum TerminalStatus: Equatable, Sendable {
     case finished
 
     /// Process names treated as agents. Matched case-insensitively against the pty's foreground
-    /// process name, and by prefix so versioned binaries (`claude-code`, `codex-cli`) still count.
+    /// process name, and by prefix up to a word boundary so versioned or suffixed binaries
+    /// (`claude-code`, `codex-cli`, `claude2`) still count while `amplify` and `ampl` — programs
+    /// that merely START with "amp" — do not (18 Sep 2026).
     ///
     /// A deliberate whitelist: guessing from the process name alone would catch `node` and
     /// `python`, which run half the tools on a developer's machine, and a terminal wrongly
@@ -79,6 +81,15 @@ public enum TerminalStatus: Equatable, Sendable {
         "claude-code", "codex-cli", "aider-chat", "gemini-cli", "amp-cli", "opencode-ai", "goose-ai",
     ]
 
+    /// `name` is `agent`, or `agent` followed by something that is not a letter (`claude-code`,
+    /// `codex-cli`, `claude2`). A bare `hasPrefix` made `amplify` (AWS) and `ampl` read as the
+    /// agent `amp`, and a terminal running either showed "Working".
+    static func hasAgentPrefix(_ name: String, _ agent: String) -> Bool {
+        guard name.hasPrefix(agent) else { return false }
+        guard let next = name.dropFirst(agent.count).first else { return true }
+        return !next.isLetter
+    }
+
     public static func isGenericRuntime(_ name: String?) -> Bool {
         guard let name = name?.lowercased() else { return false }
         return genericRuntimes.contains(name)
@@ -96,7 +107,7 @@ public enum TerminalStatus: Equatable, Sendable {
     public static func isAgentProcess(_ name: String?, path: String? = nil, args: String? = nil) -> Bool {
         if let name = name?.lowercased(), !name.isEmpty,
            exactAgentProcessNames.contains(name)
-            || agentProcessNames.contains(where: { name == $0 || name.hasPrefix($0) }) { return true }
+            || agentProcessNames.contains(where: { hasAgentPrefix(name, $0) }) { return true }
         if let args = args?.lowercased(), !args.isEmpty {
             // Split on separators so `@openai/codex/cli.js` yields "codex" as its own token, and a
             // path merely CONTAINING the word does not.

@@ -22,6 +22,18 @@ final class AgentStatusTests: XCTestCase {
         XCTAssertFalse(TerminalStatus.isAgentProcess(nil))
     }
 
+    /// The prefix rule exists for versioned or suffixed binaries (`claude-code`, `codex-cli`,
+    /// `grok-cli`), not for any program that happens to START with an agent's name: `amplify`
+    /// (AWS) and `ampl` begin with "amp", and a terminal running them read as an agent working.
+    func testAgentPrefixMatchStopsAtAWordBoundary() {
+        for name in ["claude-code", "codex-cli", "grok-cli", "cursor-agent", "claude2"] {
+            XCTAssertTrue(TerminalStatus.isAgentProcess(name), name)
+        }
+        for name in ["amplify", "ampl", "ampere", "copilotd", "goosefs", "geminiscope"] {
+            XCTAssertFalse(TerminalStatus.isAgentProcess(name), "\(name) merely starts with an agent's name")
+        }
+    }
+
     func testScreenStateFallbackReadsPromptsAndWorkingMarkers() {
         let screens: [(String, [String], ScreenState?)] = [
             ("claude permission dialog", ["Do you want to make this edit to main.swift?", "❯ 1. Yes", "  2. Yes, and don't ask again this session", "  3. No"], .waitingForInput),
