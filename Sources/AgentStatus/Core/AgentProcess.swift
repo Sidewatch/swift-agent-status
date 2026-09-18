@@ -21,7 +21,16 @@ public enum AgentProcess {
         let base = (first as NSString).lastPathComponent
         guard TerminalStatus.isGenericRuntime(base) else { return base.isEmpty ? nil : base }
         // A runtime names nothing. Use the script it was handed, minus its extension.
-        for arg in parts.dropFirst() where !arg.hasPrefix("-") {
+        let rest = Array(parts.dropFirst())
+        var k = 0
+        while k < rest.count {
+            let arg = rest[k]
+            // Inline code (`python3 -c …`, `node -e …`, `sh -c …`) is not a program: the runtime
+            // is the honest name, not the first word of the snippet.
+            if ["-c", "-e", "-p", "--eval", "--print"].contains(arg) { return base }
+            // `python -m http.server`: the module is the program.
+            if arg == "-m", k + 1 < rest.count { return rest[k + 1] }
+            if arg.hasPrefix("-") { k += 1; continue }
             var name = (arg as NSString).lastPathComponent
             for ext in [".js", ".mjs", ".cjs", ".py", ".rb"] where name.hasSuffix(ext) {
                 name = String(name.dropLast(ext.count))

@@ -23,21 +23,19 @@ public enum TerminalStatus: Equatable, Sendable {
     case running
     /// The agent is blocked on you — a permission prompt, or a question.
     ///
-    /// The state the rail exists for, and the only one that cannot be inferred from the process
-    /// table: an agent waiting for input looks exactly like an agent thinking, because both have
-    /// the same foreground process. It comes from Claude Code's `Notification` hook, attributed
-    /// to this terminal via ``ClaudeSessionIndex``.
+    /// The one state that cannot be inferred from the process table: an agent waiting for input
+    /// looks exactly like an agent thinking, because both have the same foreground process. It
+    /// comes from the SCREEN — ``ScreenStateClassifier`` reading the bottom rows the agent drew
+    /// (a numbered choice, a y/n, a known ask phrase) — handed in as ``TerminalAttention/waiting``.
+    /// Nothing is installed for it, so no path or tool name can go stale.
     case waiting
     /// An agent finished here and nobody has looked at this terminal since.
     ///
-    /// The state the rail exists for. Two sources feed it, hook first:
-    ///   - a `Stop` hook attributed to this terminal (``TerminalAttention/done``). For Claude
-    ///     Code this is the ONLY working signal — it stays resident between turns, so its
-    ///     process transition happens when you quit it, not when a turn ends;
-    ///   - the terminal's own transition (agent running → back at the prompt, unfocused) — the
-    ///     fallback that needs no hooks installed and covers agents that have none. It stands
-    ///     down for any run the hooks have spoken for (`TerminalController.noteAgentTransition`),
-    ///     so one completion can never raise two notices.
+    /// Derived from the terminal's own transition: an agent held the foreground, then the shell
+    /// was back at the prompt while the user was elsewhere. The host latches the edge and reports
+    /// it once the prompt returns, so an agent handing off to a build tool is still one run. The
+    /// limit: Claude Code stays resident between turns, so this fires when the agent EXITS, not
+    /// when a turn ends — turn ends are the transcript's business, not the process table's.
     case finished
 
     /// Process names treated as agents. Matched case-insensitively against the pty's foreground
@@ -121,37 +119,31 @@ public enum TerminalStatus: Equatable, Sendable {
     /// call the REAL derivation instead of a copy of it. A probe that restates the rule agrees
     /// with itself no matter what the app does, which is how a wrong rule survives a green test.
     ///
-    /// Precedence, top down: an unacknowledged hook signal outranks EVERYTHING — Claude Code
-    /// keeps running between turns, so a waiting agent and a thinking one are indistinguishable
-    /// from the process table, and a resident agent is always "busy", so hook-reported
-    /// completion must outrank busy or it could never show. Below that, busy outranks the
-    /// transition-derived completion flag: a terminal that has started new work is working,
-    /// whatever it finished a moment ago.
+    /// Precedence, top down: an unacknowledged attention signal outranks EVERYTHING — a waiting
+    /// agent is still "busy" in the process table, so the screen's verdict must outrank busy or
+    /// it could never show. Below that, busy outranks the transition-derived completion flag: a
+    /// terminal that has started new work is working, whatever it finished a moment ago.
     ///
     /// No parameter has a default. Three of these used to default to nil, and omitting one
     /// silently degraded the answer — forget `attention:` and a waiting agent reports `.agent` —
     /// with nothing for the compiler to catch. See ``ForegroundInfo``.
     public static func derive(foreground fg: ForegroundInfo, unseenCompletion: Bool,
                        attention: TerminalAttention?) -> TerminalStatus {
-        switch attention {
-        case .waiting: return .waiting
-        case .done:    return .finished
-        case nil:      break
-        }
+        if attention == .waiting { return .waiting }
         if fg.isBusy { return isAgentProcess(fg.process, path: fg.processPath, args: fg.processArgs) ? .agent : .running }
         return unseenCompletion ? .finished : .idle
     }
 
-    /// SF Symbol for the status dot.
-    /// A hook-delivered state the user may need to act on — the only states that earn
-    /// a badge on the tab and a dot in the rail. A working agent announces itself in its
-    /// own title; a badge beside it said the same thing twice.
+    /// A state the user may need to act on — the only states that earn a badge on the tab.
+    /// A working agent announces itself in its own title; a badge beside it said the same
+    /// thing twice.
     public var isActionable: Bool { self == .waiting || self == .finished }
 
-    /// Whether an agent is (or was, per the hooks) the foreground process — the
-    /// terminals whose cwd is where that agent's transcript lives.
+    /// Whether an agent is (or was) the foreground process — the terminals whose cwd is where
+    /// that agent's transcript lives.
     public var impliesAgent: Bool { self == .agent || self == .waiting || self == .finished }
 
+    /// SF Symbol for the status dot.
     public var symbolName: String {
         switch self {
         case .idle:     return "circle"

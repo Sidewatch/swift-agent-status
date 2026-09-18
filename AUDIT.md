@@ -27,3 +27,4 @@ dead-code and risk-pattern scans, docs drift); line-by-line logic review was tar
 ## History
 
 - 17 Sep 2026 — full audit (app + all 20 libraries), Claude with David.
+- 18 Sep 2026 — logic review with the app's terminal subsystem: `TerminalAttention.done` removed (nothing produced it since the hooks layer went), hook wording in `TerminalStatus`/`TerminalAttention` docs replaced by the screen classifier, `commandName` treats `-c`/`-e`/`-p` snippets as the runtime and `-m` as the module. The host-side `KERN_PROCARGS2` bug that starved `commandName` of real argv is fixed in the app.

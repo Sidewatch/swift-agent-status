@@ -12,13 +12,15 @@
 import Foundation
 
 /// Kept separate from ``TerminalStatus`` because it is a different KIND of fact: status is
-/// observed continuously from the process table, while this is an event that arrived once and
-/// stays true until you look. Merging them would mean re-deriving an event on every poll.
+/// observed continuously from the process table, while this is a verdict about the screen that
+/// stays true until you look. Merging them would mean re-deriving it on every poll.
+///
+/// One case since 18 Sep 2026: `done` was the `Stop` hook's signal, and nothing had produced it
+/// since the hooks layer was removed on 11 Sep — completion is the process transition's business
+/// (``TerminalStatus/finished``).
 public enum TerminalAttention: Equatable, Sendable {
-    /// A `Notification` hook — permission prompt or question. Nothing moves until you answer.
+    /// A prompt is on screen — a permission ask or a question. Nothing moves until you answer.
     case waiting
-    /// A `Stop` hook — the turn finished.
-    case done
 }
 
 /// One terminal's row in the rail: identity, how to name it, what it is doing, and where.

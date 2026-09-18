@@ -58,7 +58,6 @@ final class AgentStatusTests: XCTestCase {
     func testAttentionOutranksTheProcessAndNeedsYouSortsFirst() {
         let running = ForegroundInfo(isBusy: true, process: "claude", processPath: nil, processArgs: nil)
         XCTAssertEqual(TerminalStatus.derive(foreground: running, unseenCompletion: false, attention: .waiting), .waiting)
-        XCTAssertEqual(TerminalStatus.derive(foreground: running, unseenCompletion: false, attention: .done), .finished)
         XCTAssertEqual(TerminalStatus.derive(foreground: running, unseenCompletion: false, attention: nil), .agent)
         XCTAssertEqual([TerminalStatus.idle, .running, .agent, .finished, .waiting].sorted { $0.priority < $1.priority }, [.waiting, .finished, .agent, .running, .idle])
         XCTAssertEqual([TerminalStatus.idle, .running, .agent, .finished, .waiting].filter(\.isActionable), [.finished, .waiting])
@@ -75,6 +74,11 @@ final class AgentStatusTests: XCTestCase {
             ("node server.js", "server"),
             ("cargo build --release", "cargo"),
             ("vim README.md", "vim"),
+            // Inline code is not a program; a module is.
+            ("python3 -c import time; time.sleep(9)", "python3"),
+            ("node -e setTimeout(()=>{},1e4)", "node"),
+            ("sh -c make test", "sh"),
+            ("python3 -m http.server 8000", "http.server"),
             (nil, nil), ("", nil),
         ]
         for (args, want) in cases { XCTAssertEqual(AgentProcess.commandName(fromArgs: args), want, args ?? "nil") }
