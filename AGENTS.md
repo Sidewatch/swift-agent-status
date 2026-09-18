@@ -1,6 +1,6 @@
 # Swift Agent Status
 
-What a terminal is doing — idle, running, agent working, needs you, done — derived from the foreground process and an agent's hook signals, with a screen-scrape fallback.
+What a terminal is doing — idle, running, agent working, needs you, done — derived from the foreground process (name, path, argv) and the screen the agent drew.
 
 - Module `AgentStatus` in `Sources/AgentStatus`; tests in `Tests`; `swift test` is the whole check.
 - Swift 6 language mode, tools 6.2, macOS 14+, no dependencies.
