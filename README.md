@@ -1,6 +1,6 @@
 # Swift Agent Status
 
-What a terminal is doing: idle, running something, running a coding agent, waiting on you, or finished — derived from the pty's foreground process (name, executable path, argv), with a screen-scrape fallback for telling a waiting agent from a thinking one.
+What a terminal is doing: idle, running something, running a coding agent, waiting on you, or finished — derived from the pty's foreground process (name, executable path, argv), with a screen-scrape fallback for telling a waiting agent from a thinking one. And what the terminal SAID: the compiler and linter diagnostics in its scrollback, parsed so a host can mark the lines the toolchain named.
 
 Extracted from Sidewatch. Recognises Claude Code, Codex, Gemini CLI, OpenCode, Aider, Hermes, Grok and pi.
 
@@ -11,6 +11,7 @@ Extracted from Sidewatch. Recognises Claude Code, Codex, Gemini CLI, OpenCode, A
 - 🧭 **Status derivation** — `TerminalStatus.derive(foreground:unseenCompletion:attention:)`: one rule, no defaulted parameters, an explicit attention signal outranking the process table
 - 🕵️ **Agent recognition** — a deliberate whitelist across the three install shapes: by name (`codex`), by executable path (`…/claude/versions/2.1.223`), by argv (`node …/@openai/codex/cli.js`); exact-only for names too short to prefix-match (`pi`)
 - 🏷️ **Command naming from argv** — `AgentProcess.commandName(fromArgs:)`: "codex", not "node"; "claude", not a version number
+- 🧱 **Build diagnostics from the scrollback** — `BuildDiagnostic.parse(_:)` reads ONE shape, `path:line[:col]: error|warning|note: message`, anchored so prose with a colon, a URL, a timestamp or a stack frame cannot match; `parseAll(_:)` keeps the LAST diagnostic per location (a build prints its history); `stripANSI(_:)` first, because compilers colour their output
 - 👀 **Screen-state fallback** — `ScreenStateClassifier.classify(rows)`: a numbered choice with a cursor, a y/n question, an explicit "Allow …?" → waiting; "esc to interrupt" → working; nil otherwise (the honest answer, most of the time)
 - 📋 **Value types** — `ForegroundInfo`, `TerminalAttention`, `ScreenState`; all `Sendable`
 - 🪶 **Zero dependencies** — Foundation only; colours and fonts are the host's
@@ -43,6 +44,12 @@ AgentProcess.commandName(fromArgs: fg.processArgs)                              
 ScreenStateClassifier.classify(["Run `npm test`? [y/N]"])                          // .waitingForInput
 
 [TerminalStatus.idle, .agent, .waiting].sorted { $0.priority < $1.priority }       // waiting first
+
+// What the build said, out of the terminal's rows (oldest first): one diagnostic per location, the latest wins.
+let rows = screenRows.map(BuildDiagnostic.stripANSI)
+for d in BuildDiagnostic.parseAll(rows) {
+    print(d.path, d.line, d.column ?? 0, d.severity, d.message)   // "Main.swift", 42, 17, .error, "cannot find 'foo' in scope"
+}
 ```
 
 ## For agents

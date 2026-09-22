@@ -45,3 +45,4 @@ token split, `AgentProcess.commandName`'s runtime/script/`-c`/`-m` handling.
 - 17 Sep 2026 — full audit (app + all 20 libraries), Claude with David.
 - 18 Sep 2026 — logic review with the app's terminal subsystem: `TerminalAttention.done` removed (nothing produced it since the hooks layer went), hook wording in `TerminalStatus`/`TerminalAttention` docs replaced by the screen classifier, `commandName` treats `-c`/`-e`/`-p` snippets as the runtime and `-m` as the module. The host-side `KERN_PROCARGS2` bug that starved `commandName` of real argv is fixed in the app.
 - 18 Sep 2026 (later) — logic review of the whole package: the `amplify` false positive above, Claude with David.
+- 22 Sep 2026 — `BuildDiagnostic` moved in from Sidewatch (`Terminal/BuildDiagnostic.swift`, unchanged rules, made public) with its harness ported to `BuildDiagnosticTests`; `SECURITY.md` added to match the family.
