@@ -1,0 +1,42 @@
+//
+//  AttentionNotice.swift
+//  AgentStatus
+//
+//  Whether a change in an agent's state deserves a notification, and what it should say.
+//
+//  Created by David Sherlock on 9/24/26.
+//
+
+import Foundation
+
+/// The rule behind an "agent needs you" / "agent finished" notification (24 Sep 2026, after
+/// reading herdr: it notifies for a blocked or finished pane and suppresses the popup for the
+/// tab you are looking at). A notification is for a state the person cannot see: the app is in
+/// the background, or the pane is not on screen. One is never posted for the pane in front of
+/// them — the tab badge already says it.
+public enum AttentionNotice: Equatable, Sendable {
+    /// A prompt is on screen waiting for an answer.
+    case needsYou(prompt: String?)
+    /// The agent's run ended and the shell is back at its prompt.
+    case finished
+
+    /// Whether to post: the feature on, and the pane not in plain sight.
+    public static func shouldNotify(enabled: Bool, appActive: Bool, paneVisible: Bool) -> Bool {
+        enabled && !(appActive && paneVisible)
+    }
+
+    /// The notification's title and body for an agent named `agent` ("Claude", "Codex"…).
+    public func text(agent: String) -> (title: String, body: String) {
+        let name = agent.isEmpty ? "Agent" : agent
+        switch self {
+        case .needsYou(let prompt):
+            return ("\(name) needs you", prompt?.trimmingCharacters(in: .whitespaces).nonEmpty ?? "A prompt is waiting in the terminal.")
+        case .finished:
+            return ("\(name) finished", "Back at the prompt.")
+        }
+    }
+}
+
+private extension String {
+    var nonEmpty: String? { isEmpty ? nil : self }
+}

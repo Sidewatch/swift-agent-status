@@ -44,8 +44,28 @@ final class AgentStatusTests: XCTestCase {
             ("agent output, nothing asked", ["Found 3 TODO comments in src/:", "- src/main.py:7 — read config_path from argv"], nil),
             ("numbered list without cursor is not a prompt", ["1. Initial commit", "2. Added parser"], nil),
             ("empty screen", ["", "", ""], nil),
+            // Claude Code 2.1.2xx shapes (24 Sep 2026, herdr's manifest checked against real screens).
+            ("mcp elicitation", ["MCP server \"github\" requests your input", "  Repository name: ", "  ❯ Accept   Decline"], .waitingForInput),
+            ("dynamic workflow confirmation", ["Run a dynamic workflow?", "  This will start 6 agents.", "  ❯ 1. Yes", "    2. No"], .waitingForInput),
+            ("plan approval footer", ["Ready to code?", "  Here is the plan…", "  ↑/↓ to navigate · enter to confirm · esc to cancel"], .waitingForInput),
+            ("esc to cancel alone is still working", ["✻ Thinking… (esc to cancel)", "", "> "], .working),
         ]
         for (label, rows, want) in screens { XCTAssertEqual(ScreenStateClassifier.classify(rows), want, label) }
+        XCTAssertEqual(ScreenStateClassifier.promptLine(["Do you want to make this edit to main.swift?", "❯ 1. Yes", "  2. No"]), "Do you want to make this edit to main.swift?", "the question above the cursor, not the cursor's line")
+        XCTAssertEqual(ScreenStateClassifier.promptLine(["Run `npm test`? [y/N]"]), "Run `npm test`? [y/N]")
+        XCTAssertEqual(ScreenStateClassifier.promptLine(["Ready to code?", "  ↑/↓ to navigate · enter to confirm · esc to cancel"]), "Ready to code?")
+        XCTAssertNil(ScreenStateClassifier.promptLine(["✻ Baking… (esc to interrupt)"]))
+    }
+
+    func testAttentionNoticeFiresOnlyForWhatThePersonCannotSee() {
+        XCTAssertTrue(AttentionNotice.shouldNotify(enabled: true, appActive: false, paneVisible: true), "app in the background")
+        XCTAssertTrue(AttentionNotice.shouldNotify(enabled: true, appActive: true, paneVisible: false), "pane hidden behind another tab or a collapsed panel")
+        XCTAssertFalse(AttentionNotice.shouldNotify(enabled: true, appActive: true, paneVisible: true), "the pane in front: the badge is enough")
+        XCTAssertFalse(AttentionNotice.shouldNotify(enabled: false, appActive: false, paneVisible: false), "off is off")
+        let needs = AttentionNotice.needsYou(prompt: "Do you want to proceed?").text(agent: "Claude")
+        XCTAssertEqual(needs.title, "Claude needs you"); XCTAssertEqual(needs.body, "Do you want to proceed?")
+        XCTAssertEqual(AttentionNotice.needsYou(prompt: "  ").text(agent: "").body, "A prompt is waiting in the terminal.")
+        XCTAssertEqual(AttentionNotice.finished.text(agent: "Codex").title, "Codex finished")
     }
 
     private func status(_ busy: Bool, _ process: String?, _ path: String?, _ args: String?, unseen: Bool) -> TerminalStatus {

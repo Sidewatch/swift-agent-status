@@ -25,7 +25,15 @@ public enum ScreenStateClassifier {
         "do you want to proceed", "do you want to make this edit", "do you want to allow",
         "allow execution", "allow this", "allow once", "approve", "permission",
         "press enter to continue", "waiting for your", "what would you like to do",
+        // Claude Code 2.1.2xx (24 Sep 2026, from herdr's Claude manifest, checked against the
+        // real screens): a workflow's confirmation, and an MCP server's elicitation dialog.
+        "run a dynamic workflow", "requests your input",
     ]
+    /// A dialog's footer: "esc to cancel" beside "enter to confirm" / "enter to select" is a
+    /// prompt waiting on a choice (Claude Code's plan approval, model picker, AskUserQuestion),
+    /// whatever the question above it says. "esc to cancel" ALONE is a working marker.
+    private static let dialogCancel = "esc to cancel"
+    private static let dialogConfirms = ["enter to confirm", "enter to select", "enter to submit"]
     private static let workingMarkers: [String] = ["esc to interrupt", "esc to cancel", "ctrl+c to interrupt", "ctrl-c to interrupt"]
 
     /// Classifies the bottom rows of a screen (top→bottom order). Nil when nothing on screen
@@ -36,13 +44,30 @@ public enum ScreenStateClassifier {
         let lower = trimmed.map { $0.lowercased() }
         // A prompt outranks a working marker: Claude keeps "esc to interrupt" on screen
         // while its permission dialog is up, and the dialog is what matters.
-        for (i, line) in trimmed.enumerated() {
-            let range = NSRange(line.startIndex..., in: line)
-            if numberedChoice.firstMatch(in: line, range: range) != nil { return .waitingForInput }
-            if yesNo.firstMatch(in: line, range: range) != nil { return .waitingForInput }
-            if asks.contains(where: { lower[i].contains($0) }), lower[i].contains("?") || lower[i].hasSuffix(":") { return .waitingForInput }
-        }
+        if promptLine(rows) != nil { return .waitingForInput }
         if lower.contains(where: { l in workingMarkers.contains(where: { l.contains($0) }) }) { return .working }
         return nil
+    }
+
+    /// The line that makes the screen a prompt — the question or the choice the cursor sits on —
+    /// or nil when nothing on it asks. What a notification quotes.
+    public static func promptLine(_ rows: [String]) -> String? {
+        let trimmed = rows.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        let lower = trimmed.map { $0.lowercased() }
+        for (i, line) in trimmed.enumerated() {
+            let range = NSRange(line.startIndex..., in: line)
+            if numberedChoice.firstMatch(in: line, range: range) != nil { return question(before: i, in: trimmed) ?? line }
+            if yesNo.firstMatch(in: line, range: range) != nil { return line }
+            if asks.contains(where: { lower[i].contains($0) }), lower[i].contains("?") || lower[i].hasSuffix(":") || lower[i].contains("requests your input") { return line }
+        }
+        if let footer = lower.firstIndex(where: { $0.contains(dialogCancel) && dialogConfirms.contains(where: $0.contains) }) {
+            return question(before: footer, in: trimmed) ?? trimmed[footer]
+        }
+        return nil
+    }
+
+    /// The nearest line above `index` that reads as the question a choice answers.
+    private static func question(before index: Int, in rows: [String]) -> String? {
+        rows[..<index].last { $0.contains("?") }
     }
 }
