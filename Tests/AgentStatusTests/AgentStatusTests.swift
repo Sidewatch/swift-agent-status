@@ -115,4 +115,54 @@ final class AgentStatusTests: XCTestCase {
         ]
         for (args, want) in cases { XCTAssertEqual(AgentProcess.commandName(fromArgs: args), want, args ?? "nil") }
     }
+
+    // MARK: - The agents added 26 Sep 2026 (David, from Omarchy's harness list)
+
+    func testTheNewlyListedAgentsAreRecognisedByName() {
+        for name in ["crush", "antigravity", "ori", "droid", "pi"] {
+            XCTAssertTrue(TerminalStatus.isAgentProcess(name), "\(name) should read as an agent")
+        }
+        XCTAssertTrue(TerminalStatus.isAgentProcess("crush-cli"), "a suffixed binary still counts")
+    }
+
+    /// The word-boundary rule already declines these, whether the stem is exact or prefixed —
+    /// asserted so a change to THAT rule is caught here too.
+    func testOrdinaryProgramsSharingAStemAreNotAgents() {
+        for name in ["origin", "original", "droidcam", "pip", "ping", "pigz", "orient", "crushftp"] {
+            XCTAssertFalse(TerminalStatus.isAgentProcess(name), "\(name) is not an agent")
+        }
+    }
+
+    /// What equality actually buys over the prefix rule: a non-letter after a two- or
+    /// three-letter stem. `pi2` and `ori-2` would pass the boundary rule and must not pass this.
+    func testAShortStemFollowedByANonLetterIsNotAnAgent() {
+        for name in ["pi2", "ori-2", "droid.old", "pi_", "ori3"] {
+            XCTAssertFalse(TerminalStatus.isAgentProcess(name), "\(name) is not an agent")
+        }
+        // The longer, distinctive names keep the looseness on purpose.
+        XCTAssertTrue(TerminalStatus.isAgentProcess("antigravity2"))
+    }
+
+    /// Amazon Q's `q` is deliberately absent: a single letter is a name other tools use, and a
+    /// pane claiming an agent is running when one is not is a false fact on a windshield.
+    func testAmazonQIsNotClaimedByASingleLetter() {
+        XCTAssertFalse(TerminalStatus.isAgentProcess("q"))
+    }
+
+    /// The gap this closed: the ARGUMENTS tier never consulted the exact names, so an agent
+    /// installed under a runtime was invisible to all three tiers.
+    func testAnExactlyNamedAgentUnderARuntimeIsSeenThroughItsArguments() {
+        XCTAssertTrue(TerminalStatus.isAgentProcess("node", path: "/usr/local/bin/node",
+                                                    args: "node /opt/pi/cli.js --resume"))
+        XCTAssertTrue(TerminalStatus.isAgentProcess("node", path: "/usr/local/bin/node",
+                                                    args: "node /opt/ori/index.js"))
+        XCTAssertFalse(TerminalStatus.isAgentProcess("node", path: "/usr/local/bin/node",
+                                                     args: "node /srv/origin/server.js"),
+                       "a path merely containing the word is not a token match")
+    }
+
+    func testTheNewNamesAreSeenInAPathComponentToo() {
+        XCTAssertTrue(TerminalStatus.isAgentProcess("1.4.2", path: "/Users/x/.local/share/crush/versions/1.4.2"))
+        XCTAssertTrue(TerminalStatus.isAgentProcess("2.0.0", path: "/Users/x/.local/share/droid/2.0.0"))
+    }
 }

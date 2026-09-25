@@ -48,12 +48,24 @@ public enum TerminalStatus: Equatable, Sendable {
     /// showing "agent working" is worse than one showing the honest "running".
     public static let agentProcessNames = [
         "claude", "codex", "aider", "goose", "gemini", "copilot", "amp", "opencode", "cursor",
-        "hermes", "grok",
+        "hermes", "grok", "crush", "antigravity",
     ]
 
-    /// Agents whose name is too short to prefix-match: `pi` would otherwise claim `pip`,
-    /// `ping` and `pigz`. Matched by equality only.
-    public static let exactAgentProcessNames: Set<String> = ["pi"]
+    /// Agents whose name is an ordinary English stem, matched by equality only at every tier.
+    ///
+    /// Note what this does and does not buy, because the original comment here was stale: since
+    /// the word-boundary rule of 18 Sep 2026, prefix matching ALREADY declines `pip`, `ping`,
+    /// `pigz`, `origin` and `droidcam`, because the character after the stem is a letter. What
+    /// equality adds is the rest — `pi2`, `ori-2`, `droid.old` — where a non-letter follows and
+    /// the prefix rule would say yes. For a two- or three-letter stem that is a real risk and
+    /// the agent gains nothing from the looseness, since these tools ship under their bare name.
+    ///
+    /// Amazon Q's `q` is deliberately NOT here. A single letter is a name other tools use — `q`
+    /// is also a well-known CSV/JSON query tool — and this list decides whether a pane says an
+    /// agent is running, whether closing it asks first, and whether a notification fires. A
+    /// windshield may show nothing; it may not show something untrue. Add it only with a way to
+    /// tell the two apart.
+    public static let exactAgentProcessNames: Set<String> = ["pi", "ori", "droid"]
 
     /// Whether the foreground program is an agent, by name OR by executable path.
     ///
@@ -112,7 +124,12 @@ public enum TerminalStatus: Equatable, Sendable {
             // Split on separators so `@openai/codex/cli.js` yields "codex" as its own token, and a
             // path merely CONTAINING the word does not.
             let tokens = Set(args.split(whereSeparator: { "/\\ \t@".contains($0) }).map(String.init))
-            if (agentProcessNames + agentPackageNames).contains(where: { tokens.contains($0) }) { return true }
+            // `exactAgentProcessNames` belongs here too: these are whole tokens already, so
+            // there is no prefix to be loose about, and without them an agent installed under a
+            // runtime (`node …/pi/cli.js`) was invisible to every tier — the exact gap the three
+            // tiers exist to close.
+            if (agentProcessNames + agentPackageNames).contains(where: { tokens.contains($0) })
+                || exactAgentProcessNames.contains(where: { tokens.contains($0) }) { return true }
         }
         guard let path = path?.lowercased(), !path.isEmpty else { return false }
         // EXACT component match. A prefix rule would fire on any directory merely starting with
