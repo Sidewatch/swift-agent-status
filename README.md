@@ -1,3 +1,7 @@
+> **This package has moved.** It is now the `AgentStatus` module of [swift-agent-kit](https://github.com/Sidewatch/swift-agent-kit), with its full
+> history. Depend on `.package(url: "https://github.com/Sidewatch/swift-agent-kit.git", from: "0.1.0")` and the `AgentStatus` product;
+> `import AgentStatus` is unchanged. This repository is archived.
+
 # Swift Agent Status
 
 What a terminal is doing: idle, running something, running a coding agent, waiting on you, or finished — derived from the pty's foreground process (name, executable path, argv), with a screen-scrape fallback for telling a waiting agent from a thinking one. And what the terminal SAID: the compiler and linter diagnostics in its scrollback, parsed so a host can mark the lines the toolchain named.
